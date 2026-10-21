@@ -1,0 +1,118 @@
+
+# Case Study 5B: Huffman Tree Compression
+# Frequency-Based Encoding
+
+import heapq
+from collections import Counter
+
+
+class Node:
+    def __init__(self, char, frequency):
+        self.char = char
+        self.frequency = frequency
+        self.left = None
+        self.right = None
+
+    def __lt__(self, other):
+        return self.frequency < other.frequency
+
+
+def build_huffman_tree(text):
+    frequencies = Counter(text)
+    heap = []
+
+    for char, frequency in frequencies.items():
+        heapq.heappush(heap, Node(char, frequency))
+
+    if not heap:
+        return None
+
+    while len(heap) > 1:
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+
+        parent = Node(None, left.frequency + right.frequency)
+        parent.left = left
+        parent.right = right
+
+        heapq.heappush(heap, parent)
+
+    return heap[0]
+
+
+def generate_codes(root, code="", codes=None):
+    if codes is None:
+        codes = {}
+
+    if root is None:
+        return codes
+
+    # Give a single character the code 0
+    if root.char is not None:
+        codes[root.char] = code if code else "0"
+        return codes
+
+    generate_codes(root.left, code + "0", codes)
+    generate_codes(root.right, code + "1", codes)
+
+    return codes
+
+
+def encode_text(text, codes):
+    return "".join(codes[char] for char in text)
+
+
+def decode_text(encoded_text, root):
+    if root is None:
+        return ""
+
+    # Special case: text contains only one unique character
+    if root.char is not None:
+        return root.char * len(encoded_text)
+
+    decoded = []
+    current = root
+
+    for bit in encoded_text:
+        if bit == "0":
+            current = current.left
+        else:
+            current = current.right
+
+        if current.char is not None:
+            decoded.append(current.char)
+            current = root
+
+    return "".join(decoded)
+
+
+# Main program
+text = input("Enter text to compress: ")
+
+if not text:
+    print("Please enter some text.")
+else:
+    root = build_huffman_tree(text)
+    codes = generate_codes(root)
+
+    encoded = encode_text(text, codes)
+    decoded = decode_text(encoded, root)
+
+    print("\nCharacter Frequencies:")
+    for char, frequency in sorted(Counter(text).items()):
+        print(repr(char), ":", frequency)
+
+    print("\nHuffman Codes:")
+    for char, code in sorted(codes.items()):
+        print(repr(char), ":", code)
+
+    print("\nOriginal Text:", text)
+    print("Encoded Bits:", encoded)
+    print("Original Length:", len(text) * 8, "bits")
+    print("Encoded Length:", len(encoded), "bits")
+    print("Decoded Text:", decoded)
+
+    if decoded == text:
+        print("Compression verification successful!")
+    else:
+        print("Verification failed.")

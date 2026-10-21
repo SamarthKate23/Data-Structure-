@@ -1,0 +1,58 @@
+
+# Case Study 2: Social Network Adjacency Matrix
+# Concept: 2D Array (Adjacency Matrix)
+
+# Users in the social network
+users = ["A", "B", "C", "D", "E"]
+
+# Number of users
+n = len(users)
+
+# Create a n x n matrix filled with 0
+matrix = [[0 for i in range(n)] for j in range(n)]
+
+# Function to add friendship
+def add_friend(u1, u2):
+    i = users.index(u1)
+    j = users.index(u2)
+
+    matrix[i][j] = 1
+    matrix[j][i] = 1  # Friendship is mutual
+
+# Add friendships
+add_friend("A", "B")
+add_friend("A", "C")
+add_friend("B", "D")
+add_friend("C", "E")
+
+# Display adjacency matrix
+print("Social Network Friendship Matrix\n")
+
+print("   ", end="")
+for user in users:
+    print(user, end=" ")
+print()
+
+for i in range(n):
+    print(users[i], end="  ")
+    for j in range(n):
+        print(matrix[i][j], end=" ")
+    print()
+
+# Display friend list
+print("\nFriend List")
+
+for i in range(n):
+    print(users[i], ":", end=" ")
+
+    has_friend = False
+
+    for j in range(n):
+        if matrix[i][j] == 1:
+            print(users[j], end=" ")
+            has_friend = True
+
+    if not has_friend:
+        print("No Friends", end="")
+
+    print()

@@ -1,0 +1,75 @@
+
+# Case Study 5A: GPS Navigation System
+# Algorithm: Dijkstra's Shortest Path Algorithm
+
+import heapq
+
+# City map: locations and road distances in kilometres
+city_map = {
+    "A": [("B", 4), ("C", 2)],
+    "B": [("A", 4), ("C", 1), ("D", 3)],
+    "C": [("A", 2), ("B", 1), ("D", 8)],
+    "D": [("B", 3), ("C", 8)]
+}
+
+
+def shortest_path(graph, start, destination):
+    # Store distances and previous locations
+    distances = {place: float("inf") for place in graph}
+    previous = {place: None for place in graph}
+
+    distances[start] = 0
+    priority_queue = [(0, start)]
+
+    while priority_queue:
+        distance, current = heapq.heappop(priority_queue)
+
+        if distance > distances[current]:
+            continue
+
+        if current == destination:
+            break
+
+        for neighbour, road_distance in graph[current]:
+            new_distance = distance + road_distance
+
+            if new_distance < distances[neighbour]:
+                distances[neighbour] = new_distance
+                previous[neighbour] = current
+                heapq.heappush(
+                    priority_queue, (new_distance, neighbour)
+                )
+
+    if distances[destination] == float("inf"):
+        return None, float("inf")
+
+    # Reconstruct the shortest route
+    path = []
+    current = destination
+
+    while current is not None:
+        path.append(current)
+        current = previous[current]
+
+    path.reverse()
+    return path, distances[destination]
+
+
+print("===== GPS NAVIGATION SYSTEM =====")
+print("Locations: A, B, C, D")
+
+start = input("Enter starting location: ").strip().upper()
+destination = input("Enter destination: ").strip().upper()
+
+if start not in city_map or destination not in city_map:
+    print("Invalid location. Choose A, B, C or D.")
+else:
+    path, distance = shortest_path(
+        city_map, start, destination
+    )
+
+    if path is None:
+        print("No route found.")
+    else:
+        print("Shortest route:", " -> ".join(path))
+        print("Total distance:", distance, "km")

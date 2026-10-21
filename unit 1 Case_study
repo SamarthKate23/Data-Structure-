@@ -1,0 +1,55 @@
+
+# Case Study 1: E-commerce Product Sorting
+# Algorithm: Merge Sort
+# Strategy: Divide and Conquer
+
+def merge_sort(products):
+    if len(products) <= 1:
+        return products
+
+    mid = len(products) // 2
+    left = merge_sort(products[:mid])
+    right = merge_sort(products[mid:])
+
+    return merge(left, right)
+
+
+def merge(left, right):
+    sorted_products = []
+    i = 0
+    j = 0
+
+    while i < len(left) and j < len(right):
+        if left[i]["price"] <= right[j]["price"]:
+            sorted_products.append(left[i])
+            i += 1
+        else:
+            sorted_products.append(right[j])
+            j += 1
+
+    sorted_products.extend(left[i:])
+    sorted_products.extend(right[j:])
+
+    return sorted_products
+
+
+products = [
+    {"name": "Headphones", "price": 1500},
+    {"name": "Mouse", "price": 500},
+    {"name": "Keyboard", "price": 1000},
+    {"name": "Monitor", "price": 8000},
+    {"name": "USB Cable", "price": 200}
+]
+
+print("E-commerce Product Sorting")
+print("\nProducts Before Sorting:")
+
+for product in products:
+    print(f'{product["name"]} - Rs. {product["price"]}')
+
+sorted_products = merge_sort(products)
+
+print("\nProducts After Sorting (Low to High):")
+
+for product in sorted_products:
+    print(f'{product["name"]} - Rs. {product["price"]}')

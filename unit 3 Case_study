@@ -1,0 +1,245 @@
+"""
+CampusCare - College Help Desk Management System
+A basic Data Structures case study using:
+1. Linked List - stores complaint records
+2. Queue (FIFO) - manages pending complaints
+3. Stack (LIFO) - supports undoing the latest processed complaint
+"""
+
+# -------------------- LINKED LIST --------------------
+
+class Complaint:
+    def __init__(self, complaint_id, student_name, issue):
+        self.complaint_id = complaint_id
+        self.student_name = student_name
+        self.issue = issue
+        self.status = "Pending"
+        self.next = None
+
+
+class ComplaintLinkedList:
+    """Stores every complaint in a singly linked list."""
+
+    def __init__(self):
+        self.head = None
+
+    def add(self, complaint):
+        if self.head is None:
+            self.head = complaint
+            return
+
+        current = self.head
+        while current.next is not None:
+            current = current.next
+        current.next = complaint
+
+    def find(self, complaint_id):
+        current = self.head
+        while current is not None:
+            if current.complaint_id == complaint_id:
+                return current
+            current = current.next
+        return None
+
+    def display_all(self):
+        if self.head is None:
+            print("\nNo complaints have been registered.")
+            return
+
+        print("\n--- All Complaints ---")
+        current = self.head
+        while current is not None:
+            print(f"ID: {current.complaint_id}")
+            print(f"Student: {current.student_name}")
+            print(f"Issue: {current.issue}")
+            print(f"Status: {current.status}")
+            print("-" * 30)
+            current = current.next
+
+
+# -------------------- QUEUE --------------------
+
+class QueueNode:
+    def __init__(self, complaint_id):
+        self.complaint_id = complaint_id
+        self.next = None
+
+
+class ComplaintQueue:
+    """FIFO queue of complaint IDs waiting to be processed."""
+
+    def __init__(self):
+        self.front = None
+        self.rear = None
+
+    def is_empty(self):
+        return self.front is None
+
+    def enqueue(self, complaint_id):
+        new_node = QueueNode(complaint_id)
+        if self.is_empty():
+            self.front = self.rear = new_node
+        else:
+            self.rear.next = new_node
+            self.rear = new_node
+
+    def dequeue(self):
+        if self.is_empty():
+            return None
+
+        complaint_id = self.front.complaint_id
+        self.front = self.front.next
+        if self.front is None:
+            self.rear = None
+        return complaint_id
+
+    def add_to_front(self, complaint_id):
+        """Used by undo to restore a processed complaint to the front."""
+        new_node = QueueNode(complaint_id)
+        if self.is_empty():
+            self.front = self.rear = new_node
+        else:
+            new_node.next = self.front
+            self.front = new_node
+
+    def display(self):
+        if self.is_empty():
+            print("\nThere are no pending complaints in the queue.")
+            return
+
+        print("\n--- Pending Queue (FIFO) ---")
+        current = self.front
+        while current is not None:
+            print(f"Complaint ID: {current.complaint_id}")
+            current = current.next
+
+
+# -------------------- STACK --------------------
+
+class ActionStack:
+    """LIFO stack containing the IDs of recently processed complaints."""
+
+    def __init__(self):
+        self.items = []
+
+    def push(self, complaint_id):
+        self.items.append(complaint_id)
+
+    def pop(self):
+        if not self.items:
+            return None
+        return self.items.pop()
+
+    def is_empty(self):
+        return len(self.items) == 0
+
+
+# -------------------- MAIN APPLICATION --------------------
+
+class CampusCare:
+    def __init__(self):
+        self.complaints = ComplaintLinkedList()
+        self.pending_queue = ComplaintQueue()
+        self.processed_stack = ActionStack()
+        self.next_id = 1
+
+    def add_complaint(self):
+        print("\n--- Register a Complaint ---")
+        student_name = input("Enter student name: ").strip()
+        issue = input("Enter issue (fees, ID card, Wi-Fi, lab, etc.): ").strip()
+
+        if not student_name or not issue:
+            print("Student name and issue cannot be empty.")
+            return
+
+        complaint = Complaint(self.next_id, student_name, issue)
+        self.complaints.add(complaint)
+        self.pending_queue.enqueue(self.next_id)
+
+        print(f"Complaint registered successfully. Your complaint ID is {self.next_id}.")
+        self.next_id += 1
+
+    def search_complaint(self):
+        try:
+            complaint_id = int(input("Enter complaint ID to search: "))
+        except ValueError:
+            print("Please enter a valid numeric complaint ID.")
+            return
+
+        complaint = self.complaints.find(complaint_id)
+        if complaint is None:
+            print("Complaint not found.")
+        else:
+            print("\n--- Complaint Found ---")
+            print(f"ID: {complaint.complaint_id}")
+            print(f"Student: {complaint.student_name}")
+            print(f"Issue: {complaint.issue}")
+            print(f"Status: {complaint.status}")
+
+    def process_next_complaint(self):
+        complaint_id = self.pending_queue.dequeue()
+        if complaint_id is None:
+            print("\nNo pending complaints to process.")
+            return
+
+        complaint = self.complaints.find(complaint_id)
+        if complaint is None:
+            print("Error: complaint record could not be found.")
+            return
+
+        complaint.status = "Resolved"
+        self.processed_stack.push(complaint_id)
+        print(f"\nComplaint #{complaint_id} has been processed and marked Resolved.")
+        print("The action was saved in the undo stack.")
+
+    def undo_last_processing(self):
+        complaint_id = self.processed_stack.pop()
+        if complaint_id is None:
+            print("\nThere is no processing action to undo.")
+            return
+
+        complaint = self.complaints.find(complaint_id)
+        if complaint is None:
+            print("Error: complaint record could not be found.")
+            return
+
+        complaint.status = "Pending"
+        self.pending_queue.add_to_front(complaint_id)
+        print(f"\nUndo successful. Complaint #{complaint_id} is Pending again.")
+        print("It has been returned to the front of the queue.")
+
+    def run(self):
+        while True:
+            print("\n========== CampusCare ==========")
+            print("1. Register a complaint")
+            print("2. Display all complaints")
+            print("3. Search complaint by ID")
+            print("4. Process next complaint")
+            print("5. Display pending queue")
+            print("6. Undo last processing action")
+            print("7. Exit")
+
+            choice = input("Enter your choice (1-7): ").strip()
+
+            if choice == "1":
+                self.add_complaint()
+            elif choice == "2":
+                self.complaints.display_all()
+            elif choice == "3":
+                self.search_complaint()
+            elif choice == "4":
+                self.process_next_complaint()
+            elif choice == "5":
+                self.pending_queue.display()
+            elif choice == "6":
+                self.undo_last_processing()
+            elif choice == "7":
+                print("Thank you for using CampusCare!")
+                break
+            else:
+                print("Invalid choice. Please enter a number from 1 to 7.")
+
+
+if __name__ == "__main__":
+    app = CampusCare()
+    app.run()
